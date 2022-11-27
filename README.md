@@ -9,3 +9,7 @@
 ## Forked
 
 I forked this to support C++ and clean up some compile issues. I'll update the readme soon with new details/documentation once I get the devices and do some testing.
+
+## License
+
+I updated the license to be MIT which is closes to the original Author I believe, but if this becomes a problem, I will modify.
