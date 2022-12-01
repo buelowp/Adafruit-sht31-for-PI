@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <cstring>
 #include <string>
+#include <iostream>
 
 #define SHT31_INTERFACE_ADDR       1
 #define SHT31_DEFAULT_ADDR         0x44
@@ -54,7 +55,9 @@ public:
     sht31dreturn clearStatus();
     sht31dreturn reset();
     sht31dreturn heater(bool state);
-    bool is_open();
+    std::string lastError() { return m_lastError; }
+    int lastErrno() { return m_lastErrno; }
+    bool isOpen();
 
 private:
     void delay (unsigned int delay);

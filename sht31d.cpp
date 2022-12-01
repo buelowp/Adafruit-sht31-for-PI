@@ -3,11 +3,13 @@
 SHT31D::SHT31D(uint8_t device, uint8_t address)
 {
     m_device = "/dev/i2c-";
-    m_device += std::to_string(address);
+    m_device += std::to_string(device);
+
     if ((m_fd = open(m_device.c_str(), O_RDWR)) < 0) {
         m_open = false;
         m_lastErrno = errno;
         m_lastError = strerror(errno);
+        std::cerr << __FUNCTION__ << ": ERROR: " << m_lastError << std::endl;
         return;
     }
 
@@ -16,6 +18,7 @@ SHT31D::SHT31D(uint8_t device, uint8_t address)
         m_lastError = strerror(errno);
         close(m_fd);
         m_open = false;
+        std::cerr << __FUNCTION__ << ": ERROR: " << m_lastError << std::endl;
         return;
     }
   // Do an itial read & write of basically nothing.
@@ -34,11 +37,21 @@ SHT31D::~SHT31D()
     m_open = false;
 }
 
-bool SHT31D::is_open()
+/**
+ * \func bool SHT31D::isOpen()
+ * \return Returns true if open, false if not
+ */
+bool SHT31D::isOpen()
 {
     return m_open;
 }
 
+/**
+ * \func void SHT31D::delay(unsigned int delay)
+ * \param delay MS delay period, similar to delay(ms) in Arduino land
+ *
+ * Private function, this just allows us to delay for readings
+ */
 void SHT31D::delay(unsigned int delay)
 {
     struct timespec sleeper;
@@ -49,6 +62,12 @@ void SHT31D::delay(unsigned int delay)
     nanosleep (&sleeper, NULL) ;
 }
 
+/**
+ * \func uint8_t SHT31D::crc8(const uint8_t* data, int len)
+ * \param data The uint8_t buffer we are calculating the CRC for
+ * \param len How much data we are checking
+ * \return Returns the CRC we calculated
+ */
 uint8_t SHT31D::crc8(const uint8_t* data, int len)
 {
     const uint8_t POLYNOMIAL = 0x31;
@@ -66,9 +85,15 @@ uint8_t SHT31D::crc8(const uint8_t* data, int len)
     return crc;
 }
 
+/**
+ * \func SHT31D::sht31dreturn SHT31D::query(uint16_t sndword, uint8_t* buffer, int readsize)
+ * \param sndword The command we are querying for
+ * \param buffer Our uint8_t buffer to read data back into
+ * \param readsize The size of the uint8_t buffer
+ * \return Returns the state of the query, success or which failure
+ */
 SHT31D::sht31dreturn SHT31D::query(uint16_t sndword, uint8_t* buffer, int readsize)
 {
-    SHT31D::sht31dreturn rtn;
     int sendsize = 2;
     uint8_t snd[sendsize];
 
@@ -100,6 +125,11 @@ SHT31D::sht31dreturn SHT31D::query(uint16_t sndword, uint8_t* buffer, int readsi
     return SHT31_OK;
 }
 
+/**
+ * SHT31D::sht31dreturn SHT31D::serialNumber(uint32_t &serial)
+ * \param serial Reference to the uint32 where we store the serial number to return
+ * \return Returns an error if we cannot fetch a serial, or OK if we can
+ */
 SHT31D::sht31dreturn SHT31D::serialNumber(uint32_t &serial)
 {
     uint8_t buf[10];
@@ -124,6 +154,12 @@ SHT31D::sht31dreturn SHT31D::serialNumber(uint32_t &serial)
     return SHT31_OK;
 }
 
+/**
+ * \func SHT31D::sht31dreturn SHT31D::values(float &temp, float &hum)
+ * \param temp Float reference where the temp value is stored
+ * \param hum Float reference where the humidity is stored
+ * \return Returns an error if we cannot fetch a serial, or OK if we can
+ */
 SHT31D::sht31dreturn SHT31D::values(float &temp, float &hum)
 {
     uint8_t buf[10];
@@ -156,7 +192,11 @@ SHT31D::sht31dreturn SHT31D::values(float &temp, float &hum)
     return SHT31_OK;
 }
 
-
+/**
+ * \func SHT31D::sht31dreturn SHT31D::status(uint16_t *rtnbuf)
+ * \param rtnbuf The buffer to store the status value in
+ * \return Returns an error if we cannot fetch a serial, or OK if we can
+ */
 SHT31D::sht31dreturn SHT31D::status(uint16_t *rtnbuf)
 {
     uint8_t buf[10];
@@ -177,11 +217,22 @@ SHT31D::sht31dreturn SHT31D::status(uint16_t *rtnbuf)
     return SHT31_OK;
 }
 
+/**
+ * \func SHT31D::sht31dreturn SHT31D::clearStatus()
+ * \return Returns an error if we cannot fetch a serial, or OK if we can
+ *
+ * Ask the device to reset the status bits. The return is the query return, indicate read/write success or failure
+ */
 SHT31D::sht31dreturn SHT31D::clearStatus()
 {
     return query(SHT31_CLEARSTATUS, NULL, 0);
 }
 
+/**
+ * \func SHT31D::sht31dreturn SHT31D::heater(bool state)
+ * \param state If state is true, turn the heater on, otherwise turn it off
+ * \return Returns an error if we cannot fetch a serial, or OK if we can
+ */
 SHT31D::sht31dreturn SHT31D::heater(bool state)
 {
     if (state) {
@@ -190,6 +241,12 @@ SHT31D::sht31dreturn SHT31D::heater(bool state)
     return query(SHT31_HEATER_DISABLE, NULL, 0);
 }
 
+/**
+ * \func SHT31D::sht31dreturn SHT31D::reset()
+ * \return Returns an error if we cannot fetch a serial, or OK if we can
+ *
+ * Asks the device to reset itself
+ */
 SHT31D::sht31dreturn SHT31D::reset()
 {
     return query(SHT31_SOFTRESET, NULL, 0);
