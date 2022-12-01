@@ -71,4 +71,3 @@ private:
     bool m_open;
     uint8_t m_address;
 };
-
